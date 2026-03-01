@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-bu+)8ft@9+qd*#e#f_s@wkyv2tmq+#!a^3j15h3kjk^jzksu0j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "52.207.219.140"]
+ALLOWED_HOSTS = ["localhost", "3.88.11.241"]
 
 
 # Application definition
@@ -96,14 +96,14 @@ DATABASES = {
         "NAME": "iot_data",  # Nombre de la base de datos
         "USER": "dbadmin",  # Nombre de usuario
         "PASSWORD": "uniandesIOT1234*",  # Contraseña
-        "HOST": "10.0.41.142",  # Dirección IP de la base de datos
-        "PORT": "",  # Puerto de la base de datos
+        "HOST": "44.211.255.144",  # Dirección IP de la base de datos
+        "PORT": "5432",  # Puerto de la base de datos
     }
 }
 
 
 # Password validation
-# https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/4.0/ref/settings/#dbd-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -156,18 +156,18 @@ LOGOUT_REDIRECT_URL = '/login/'
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # Dirección del bróker MQTT
-MQTT_HOST = "34.239.134.144"
+MQTT_HOST = "44.212.33.211"
 
 # Puerto del bróker MQTT
-MQTT_PORT = 8082
+MQTT_PORT = 1883
 
 # Credenciales para el usuario suscriptor del bróker MQTT
 MQTT_USER = "admin"
 MQTT_PASSWORD = "admin"
 
 # Credenciales para el usuario publicador del bróker MQTT
-MQTT_USER_PUB = "admin2"
-MQTT_PASSWORD_PUB = "admin2"
+MQTT_USER_PUB = "stark"
+MQTT_PASSWORD_PUB = "arcReactor123"
 
 # Tópico a suscribir. "+/+/+/+/out" se suscribe únicamente a los
 # tópicos con forma <país>/<estado>/<ciudad>/<usuario>/out.
