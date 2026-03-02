@@ -153,47 +153,57 @@ def create_data(
     data.values = values
     data.times = times
 
-    def publish_alert(topic: str, message: str, host: str, port: int, user: str, password: str):
+    THRESHOLD = 28.0
+    WINDOW_MINUTES = 0.05  # 3 segundos aprox
+
+    def publish_alert(topic: str, message: str):
         client = mqtt.Client()
-        client.username_pw_set(user, password)
-        client.connect(host, port, 60)
+        client.username_pw_set("stark", "arcReactor123")
+        client.connect("44.212.33.211", 1883, 60)
         client.publish(topic, message)
         client.disconnect()
-    data.save()
 
-# --- EVENTO: promedio en ventana de tiempo ---
+    # --- EVENTO: promedio en ventana de tiempo ---
     THRESHOLD = 28.0          # umbral (ajústalo)
     WINDOW_MINUTES = 0.05       # ventana (ajústala)
 
 # Solo aplicar el evento a TEMPERATURA (evita que hum. también dispare)
 # Ajusta esto según cómo se llame tu Measurement (name / code / unit)
 # Ejemplo común: measure.name == "temperatura"
+    data.save()
     if getattr(measure, "name", "").lower() in ["temperatura", "temperature", "temp"]:
 
-        since = timezone.now() - timezone.timedelta(minutes=WINDOW_MINUTES)
-        print("ALERT enviada:", msg)
+        now = timezone.now()
+        since = now - timedelta(minutes=WINDOW_MINUTES)
 
-    # CONSULTA A BD: promedio de valores recientes (últimos WINDOW_MINUTES)
-        avg_recent = (
+    # Trae los últimos blobs (última hora y, por seguridad, la anterior)
+        blobs = (
             Data.objects
-            .filter(station=station, measurement=measure, timestamp__gte=since)
-            .aggregate(avg=Avg("avg_value"))  # o Avg("max_value") o Avg("min_value")
-            .get("avg")
-            
+            .filter(station=station, measurement=measure)
+            .order_by("-base_time")[:2]
         )
 
-        if avg_recent is not None and avg_recent > THRESHOLD:
-            topic = f"colombia/cundinamarca/bogota/{station.user.username}/in"
-            msg = f"ALERT: TempProm({WINDOW_MINUTES}m)={avg_recent:.1f} > {THRESHOLD}"
+    recent_vals = []
 
-            publish_alert(   # usa tu función de publicar (la que ya hiciste)
-                topic="colombia/cundinamarca/bogota/stark/in",
-                message="ALERT: temperatura alta",
-                host="44.212.33.211",   # o pon el string directamente
-                port="1883",
-                user="stark",
-                password="arcReactor123"
-            )
+    for b in blobs:
+        # b.times = [secs dentro de la hora], b.values = [valores]
+        if not b.times or not b.values:
+            continue
+
+        for sec, val in zip(b.times, b.values):
+            # reconstruye datetime real de cada lectura
+            t = b.base_time + timedelta(seconds=int(sec))
+            if t >= since:
+                recent_vals.append(float(val))
+
+    avg_recent = sum(recent_vals) / len(recent_vals) if recent_vals else None
+    print("EVENT DEBUG -> count:", len(recent_vals), "avg:", avg_recent, "since:", since)
+
+    if avg_recent is not None and avg_recent > THRESHOLD:
+        topic = f"colombia/cundinamarca/bogota/{station.user.username}/in"
+        msg = f"ALERT: TempProm({WINDOW_MINUTES*60:.0f}s)={avg_recent:.1f} > {THRESHOLD}"
+        print("PUBLICANDO:", topic, msg)
+        publish_alert(topic, msg)
     station.last_activity = time
     station.save()
     return data
