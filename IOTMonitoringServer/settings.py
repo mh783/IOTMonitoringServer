@@ -171,7 +171,7 @@ MQTT_PASSWORD_PUB = "arcReactor123"
 
 # Tópico a suscribir. "+/+/+/+/out" se suscribe únicamente a los
 # tópicos con forma <país>/<estado>/<ciudad>/<usuario>/out.
-TOPIC = "+/+/+/+/out"
+TOPIC = "colombia/cundinamarca/bogota/stark/out"
 
 # Opción para habilitar la transmisión de mensajes segura
 MQTT_USE_TLS = False
