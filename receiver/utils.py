@@ -153,8 +153,7 @@ def create_data(
     data.values = values
     data.times = times
 
-    THRESHOLD = 28.0
-    WINDOW_MINUTES = 0.05  # 3 segundos aprox
+    
 
     def publish_alert(topic: str, message: str):
         client = mqtt.Client()
@@ -163,20 +162,16 @@ def create_data(
         client.publish(topic, message)
         client.disconnect()
 
-    # --- EVENTO: promedio en ventana de tiempo ---
-    THRESHOLD = 28.0          # umbral (ajústalo)
-    WINDOW_MINUTES = 0.05       # ventana (ajústala)
+    THRESHOLD = 28.0
+    WINDOW_MINUTES = 0.05  # 3 segundos
 
-# Solo aplicar el evento a TEMPERATURA (evita que hum. también dispare)
-# Ajusta esto según cómo se llame tu Measurement (name / code / unit)
-# Ejemplo común: measure.name == "temperatura"
+
     data.save()
     if getattr(measure, "name", "").lower() in ["temperatura", "temperature", "temp"]:
 
         now = timezone.now()
         since = now - timedelta(minutes=WINDOW_MINUTES)
 
-    # Trae los últimos blobs (última hora y, por seguridad, la anterior)
         blobs = (
             Data.objects
             .filter(station=station, measurement=measure)
@@ -186,12 +181,10 @@ def create_data(
         recent_vals = []
 
         for b in blobs:
-            # b.times = [secs dentro de la hora], b.values = [valores]
             if not b.times or not b.values:
                 continue
 
             for sec, val in zip(b.times, b.values):
-                # reconstruye datetime real de cada lectura
                 t = b.base_time + timedelta(seconds=int(sec))
                 if t >= since:
                     recent_vals.append(float(val))
@@ -201,7 +194,7 @@ def create_data(
 
     if avg_recent is not None and avg_recent > THRESHOLD:
         topic = f"colombia/cundinamarca/bogota/{station.user.username}/in"
-        msg = f"ALERT: TempProm({WINDOW_MINUTES*60:.0f}s)={avg_recent:.1f} > {THRESHOLD}"
+        msg = f"ALERT: Temp alta"
         print("PUBLICANDO:", topic, msg)
         publish_alert(topic, msg)
     station.last_activity = time
