@@ -187,8 +187,8 @@ def create_data(
             msg = f"ALERT: TempProm({WINDOW_MINUTES}m)={avg_recent:.1f} > {THRESHOLD}"
 
             publish_alert(   # usa tu función de publicar (la que ya hiciste)
-                topic=topic,
-                message=msg,
+                topic="colombia/cundinamarca/bogota/stark/in",
+                message="ALERT: temperatura alta",
                 host="44.212.33.211",   # o pon el string directamente
                 port="1883",
                 user="stark",
