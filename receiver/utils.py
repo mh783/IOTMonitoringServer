@@ -4,7 +4,10 @@ from typing import Tuple
 from django.contrib.auth.models import User
 import requests
 from receiver.models import Location, Station, Measurement, Data, City, State, Country
-
+from django.db.models import Avg
+from django.utils import timezone
+from datetime import timedelta
+import paho.mqtt.client as mqtt
 UNITS = {
     "temperatura": "°C",
     "humedad": "%",
@@ -150,7 +153,47 @@ def create_data(
     data.values = values
     data.times = times
 
+    def publish_alert(topic: str, message: str, host: str, port: int, user: str, password: str):
+        client = mqtt.Client()
+        client.username_pw_set(user, password)
+        client.connect(host, port, 60)
+        client.publish(topic, message)
+        client.disconnect()
     data.save()
+
+# --- EVENTO: promedio en ventana de tiempo ---
+    THRESHOLD = 28.0          # umbral (ajústalo)
+    WINDOW_MINUTES = 3        # ventana (ajústala)
+
+# Solo aplicar el evento a TEMPERATURA (evita que hum. también dispare)
+# Ajusta esto según cómo se llame tu Measurement (name / code / unit)
+# Ejemplo común: measure.name == "temperatura"
+    if getattr(measure, "name", "").lower() in ["temperatura", "temperature", "temp"]:
+
+        since = timezone.now() - timezone.timedelta(minutes=WINDOW_MINUTES)
+        print("ALERT enviada:", msg)
+
+    # CONSULTA A BD: promedio de valores recientes (últimos WINDOW_MINUTES)
+        avg_recent = (
+            Data.objects
+            .filter(station=station, measurement=measure, timestamp__gte=since)
+            .aggregate(avg=Avg("avg_value"))  # o Avg("max_value") o Avg("min_value")
+            .get("avg")
+            
+        )
+
+        if avg_recent is not None and avg_recent > THRESHOLD:
+            topic = f"colombia/cundinamarca/bogota/{station.user.username}/in"
+            msg = f"ALERT: TempProm({WINDOW_MINUTES}m)={avg_recent:.1f} > {THRESHOLD}"
+
+            publish_alert(   # usa tu función de publicar (la que ya hiciste)
+                topic=topic,
+                message=msg,
+                host="44.212.33.211",   # o pon el string directamente
+                port="1883",
+                user="stark",
+                password="arcReactor123"
+            )
     station.last_activity = time
     station.save()
     return data
