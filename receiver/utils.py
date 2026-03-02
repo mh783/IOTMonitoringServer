@@ -163,7 +163,7 @@ def create_data(
 
 # --- EVENTO: promedio en ventana de tiempo ---
     THRESHOLD = 28.0          # umbral (ajústalo)
-    WINDOW_MINUTES = 3        # ventana (ajústala)
+    WINDOW_MINUTES = 0.01       # ventana (ajústala)
 
 # Solo aplicar el evento a TEMPERATURA (evita que hum. también dispare)
 # Ajusta esto según cómo se llame tu Measurement (name / code / unit)
