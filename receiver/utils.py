@@ -183,18 +183,18 @@ def create_data(
             .order_by("-base_time")[:2]
         )
 
-    recent_vals = []
+        recent_vals = []
 
-    for b in blobs:
-        # b.times = [secs dentro de la hora], b.values = [valores]
-        if not b.times or not b.values:
-            continue
+        for b in blobs:
+            # b.times = [secs dentro de la hora], b.values = [valores]
+            if not b.times or not b.values:
+                continue
 
-        for sec, val in zip(b.times, b.values):
-            # reconstruye datetime real de cada lectura
-            t = b.base_time + timedelta(seconds=int(sec))
-            if t >= since:
-                recent_vals.append(float(val))
+            for sec, val in zip(b.times, b.values):
+                # reconstruye datetime real de cada lectura
+                t = b.base_time + timedelta(seconds=int(sec))
+                if t >= since:
+                    recent_vals.append(float(val))
 
     avg_recent = sum(recent_vals) / len(recent_vals) if recent_vals else None
     print("EVENT DEBUG -> count:", len(recent_vals), "avg:", avg_recent, "since:", since)
